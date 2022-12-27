@@ -1,0 +1,46 @@
+//Filter image collection for time window, spatial location, and cloud cover
+var image = ee.Image(ee.ImageCollection('LANDSAT/LC08/C01/T1_SR')
+    .filterBounds(roi)
+    .filterDate('2016-05-01', '2016-06-30')
+    .sort('CLOUD_COVER')
+    .first());
+
+//Add true-clour composite to map
+Map.addLayer(image, {bands: ['B4', 'B3', 'B2'],min:0, max: 3000}, 'True colour image');
+
+//Choose bands to include and define feature collection to use
+var subset = image.select('B[1-7]')
+var samples = ee.FeatureCollection([Water, Forest, Urban, Sand]);
+
+// Create the scatter chart
+var Chart1 = ui.Chart.image.regions(
+    subset, samples, ee.Reducer.mean(), 10, 'label')
+        .setChartType('ScatterChart');
+print(Chart1);
+
+// Define customization options.
+var plotOptions = {
+  title: 'Landsat-8  Surface reflectance spectra',
+  hAxis: {title: 'Wavelength (nanometers)'},
+  vAxis: {title: 'Reflectance'},
+  lineWidth: 1,
+  pointSize: 4,
+  series: {
+    0: {color: 'blue'}, // Water
+    1: {color: 'green'}, // Forest
+    2: {color: 'red'}, // City
+    3: {color: 'yellow'}, //Sand
+}};
+
+// Define a list of Landsat-8 wavelengths for X-axis labels.
+var wavelengths = [443, 482, 562, 655, 865, 1609, 2201];
+
+// Create the chart and set options.
+var Chart2 = ui.Chart.image.regions(
+    subset, samples, ee.Reducer.mean(), 10, 'label', wavelengths)
+        .setChartType('ScatterChart')
+        .setOptions(plotOptions);
+// Display the chart.
+print(Chart2);
+
+// Fuente: adaptado de GEARS https://github.com/geospatialeco/GEARS/blob/master/Intro_RS_Lab6.md 
